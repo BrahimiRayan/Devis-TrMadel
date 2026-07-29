@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture - TRANSMADEL</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f4f2;
+            padding: 40px 20px;
+            color: #1e1e1e;
+        }
+        .wrap {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 32px 36px;
+            margin-bottom: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #e85d2c;
+            padding-bottom: 20px;
+            margin-bottom: 28px;
+        }
+        .header-left h1 {
+            font-size: 32px;
+            color: #e85d2c;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        .header-left .sous-titre {
+            font-size: 14px;
+            color: #6b6862;
+            margin-top: 2px;
+        }
+        .header-right {
+            text-align: right;
+            font-size: 13px;
+            color: #3d3d3d;
+            line-height: 1.6;
+        }
+        .header-right strong {
+            color: #1e1e1e;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 24px;
+        }
+
+        .info-box h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #e85d2c;
+            font-weight: 700;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e8e5e0;
+            padding-bottom: 6px;
+        }
+        .info-box p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #2c2c2c;
+        }
+        .info-box .label {
+            color: #8a8680;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            width: 85px;
+        }
+        .info-box input {
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 2px 4px;
+            border-bottom: 1px dashed #d9d6d0;
+            min-width: 150px;
+        }
+        .info-box input:focus {
+            outline: none;
+            border-bottom-color: #e85d2c;
+        }
+
+        table.items {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 20px;
+        }
+        table.items th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b6862;
+            font-weight: 700;
+            padding: 10px 8px 8px 8px;
+            border-bottom: 2px solid #1e1e1e;
+        }
+        table.items td {
+            padding: 8px;
+            border-bottom: 1px solid #e8e5e0;
+            vertical-align: middle;
+        }
+        table.items td input, table.items td textarea {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font: inherit;
+            font-size: 14px;
+            padding: 4px 0;
+        }
+        table.items td input:focus, table.items td textarea:focus {
+            outline: none;
+            border-bottom: 2px solid #e85d2c;
+        }
+        table.items .col-desc { width: 50%; }
+        table.items .col-qty { width: 12%; }
+        table.items .col-price { width: 18%; }
+        table.items .col-amount { width: 16%; }
+        table.items .col-del { width: 4%; text-align: center; }
+        .amount-cell {
+            font-weight: 600;
+            text-align: right;
+            padding-right: 8px !important;
+        }
+        .del-btn {
+            background: none;
+            border: none;
+            color: #b0ada7;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .del-btn:hover {
+            color: #c0392b;
+            background: #fbeaea;
+        }
+          .home{
+    padding: 1rem;
+    border: 1px solid black;
+    background: rgba(0, 0, 0, 0.822);
+    border-radius: 30px;
+    text-decoration: none;
+    color: wheat;
+  }
+        .add-row {
+            background: none;
+            border: 1px dashed #e85d2c;
+            color: #e85d2c;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .add-row:hover {
+            background: #fef0e9;
+        }
+
+        .totals {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 16px;
+            border-top: 2px solid #e8e5e0;
+            padding-top: 16px;
+        }
+        .totals-box {
+            width: 280px;
+        }
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+        .totals-row.tva-row {
+            align-items: center;
+        }
+        .totals-row.tva-row input {
+            width: 60px;
+            padding: 4px 6px;
+            text-align: right;
+            border: 1px solid #d9d6d0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .totals-row.grand {
+            border-top: 2px solid #1e1e1e;
+            margin-top: 4px;
+            padding-top: 12px;
+            font-weight: 700;
+            font-size: 17px;
+        }
+        .totals-row.grand span:last-child {
+            color: #e85d2c;
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 14px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            background: #e85d2c;
+            color: #fff;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 2px 8px rgba(232, 93, 44, 0.35);
+        }
+        .btn-primary:hover {
+            background: #cc4a1e;
+        }
+        .btn-secondary {
+            background: #fff;
+            color: #1e1e1e;
+            border: 1px solid #d9d6d0;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border 0.2s;
+        }
+        .btn-secondary:hover {
+            border-color: #b0ada7;
+        }
+
+        .foot-note {
+            text-align: center;
+            color: #8a8680;
+            font-size: 11.5px;
+            margin-top: 28px;
+            line-height: 1.6;
+        }
+
+        .badge-facture {
+            display: inline-block;
+            background: #e85d2c;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 14px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            margin-left: 10px;
+        }
+
+        .reglement-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e8e5e0;
+        }
+        .reglement-row .reg-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .reglement-row .reg-item label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b6862;
+            white-space: nowrap;
+        }
+        .reglement-row .reg-item input,
+        .reglement-row .reg-item select {
+            padding: 8px 14px;
+            border: 1px solid #d9d6d0;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #faf9f7;
+        }
+        .reglement-row .reg-item input:focus,
+        .reglement-row .reg-item select:focus {
+            outline: none;
+            border-color: #e85d2c;
+        }
+
+        @media (max-width: 700px) {
+            .header {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .header-right {
+                text-align: left;
+                width: 100%;
+            }
+            .grid-2 {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .card {
+                padding: 20px;
+            }
+            table.items th {
+                display: none;
+            }
+            table.items, table.items tbody, table.items tr, table.items td {
+                display: block;
+                width: 100%;
+            }
+            table.items tr {
+                border-bottom: 1px solid #e8e5e0;
+                padding-bottom: 12px;
+                margin-bottom: 12px;
+            }
+            table.items td {
+                border-bottom: none;
+                padding: 4px 0;
+            }
+            .col-desc, .col-qty, .col-price, .col-amount, .col-del {
+                width: 100% !important;
+            }
+            .amount-cell {
+                text-align: left;
+            }
+            .totals-box {
+                width: 100%;
+            }
+            .reglement-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .reglement-row .reg-item {
+                flex-wrap: wrap;
+            }
+            .reglement-row .reg-item input,
+            .reglement-row .reg-item select {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- ====== CARTE EN-TETE ====== -->
+    <div class="card">
+        <div class="header">
+            <div class="header-left">
+                <h1>FACTURE <span class="badge-facture">PDF</span></h1>
+                <div class="sous-titre">TRANSMADEL — Demenagement &amp; Transport</div>
+            </div>
+            <div class="header-right">
+                <div><strong>TRANSMADEL</strong></div>
+                <div>18 rue d'Aulnay, Gonesse</div>
+                <div>SIRET : 90064539100021</div>
+                <div>APE : 4941B</div>
+                <div>SASU au capital de 3000 €</div>
+            </div>
+        </div>
+
+        <!-- Infos facture + client -->
+        <div class="grid-2">
+            <div class="info-box">
+                <h3>Facture</h3>
+                <p>
+                    <span class="label">N° facture</span>
+                    <input type="text" id="f-numero" value="F-2026-001">
+                </p>
+                <p>
+                    <span class="label">Date</span>
+                    <input type="date" id="f-date">
+                </p>
+                <p>
+                    <span class="label">Echeance</span>
+                    <input type="text" id="f-echeance" value="30 jours">
+                </p>
+            </div>
+            <div class="info-box">
+                <h3>Client</h3>
+                <p>
+                    <span class="label">Societe / Nom</span>
+                    <input type="text" id="f-nom" placeholder="Nom du client">
+                </p>
+                <p>
+                    <span class="label">Adresse</span>
+                    <input type="text" id="f-adresse" placeholder="Adresse complete">
+                </p>
+                <p>
+                    <span class="label">SIRET</span>
+                    <input type="text" id="f-siret" placeholder="SIRET du client">
+                </p>
+                <p>
+                    <span class="label">APE</span>
+                    <input type="text" id="f-ape" placeholder="Code APE">
+                </p>
+            </div>
+        </div>
+
+        <!-- Prestations -->
+        <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:0.5px;color:#e85d2c;font-weight:700;margin:20px 0 6px;border-bottom:1px solid #e8e5e0;padding-bottom:6px;">Prestations</h3>
+
+        <table class="items">
+            <thead>
+                <tr>
+                    <th class="col-desc">Designation</th>
+                    <th class="col-qty">Qte</th>
+                    <th class="col-price">Prix unitaire HT (€)</th>
+                    <th class="col-amount">Montant HT (€)</th>
+                    <th class="col-del"></th>
+                </tr>
+            </thead>
+            <tbody id="items-body"></tbody>
+        </table>
+
+        <button class="add-row" id="add-row-btn" type="button">+ Ajouter une ligne</button>
+
+        <!-- Totaux -->
+        <div class="totals">
+            <div class="totals-box">
+                <div class="totals-row">
+                    <span>Total Hors Taxes</span>
+                    <span id="total-ht">0,00 €</span>
+                </div>
+                <div class="totals-row tva-row">
+                    <span>
+                        <input type="number" id="tva-rate" value="20" min="0" max="100" step="0.5"> % TVA
+                    </span>
+                    <span id="total-tva">0,00 €</span>
+                </div>
+                <div class="totals-row grand">
+                    <span>TOTAL TTC</span>
+                    <span id="total-ttc">0,00 €</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reglement -->
+        <div class="reglement-row">
+            <div class="reg-item">
+                <label>Reglement :</label>
+                <select id="f-mode-paiement">
+                    <option>Virement bancaire</option>
+                    <option>Cheque</option>
+                    <option>Especes</option>
+                    <option>Carte bancaire</option>
+                    <option>Prelevement</option>
+                </select>
+            </div>
+            <div class="reg-item">
+                <label>Date de reglement :</label>
+                <input type="date" id="f-date-reglement">
+            </div>
+            <div class="reg-item">
+                <label>Ref. devis :</label>
+                <input type="text" id="f-ref-devis" placeholder="Ref. devis">
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== ACTIONS ====== -->
+    <div class="footer-actions">
+        <button class="btn-primary" id="generate-btn">Telecharger la Facture PDF</button>
+        <button class="btn-secondary" id="reset-btn">Reinitialiser</button>
+        <a href="index.html" class="home" id="reset-btn" type="button">Devis</a>
+    </div>
+
+    <p class="foot-note">
+        TRANSMADEL — 18 rue d'Aulnay, Gonesse — SIRET 90064539100021 — APE 4941B — SASU au capital de 3000 €<br>
+        Facture acquittee a la livraison, sauf mention contraire. TVA non applicable, art. 293 B du CGI.
+    </p>
+</div>
+
+<script>
+// ============================================================
+//  FONCTIONS UTILITAIRES
+// ============================================================
+
+function uid() { return Math.random().toString(36).slice(2, 9); }
+
+function fmtEUR(n) {
+    n = isFinite(n) ? n : 0;
+    var fixed = n.toFixed(2).replace('.', ',');
+    var parts = fixed.split(',');
+    var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return intPart + ',' + parts[1] + ' €';
+}
+
+function setToday() {
+    var d = new Date();
+    var year = d.getFullYear();
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    var iso = year + '-' + month + '-' + day;
+    document.getElementById('f-date').value = iso;
+    document.getElementById('f-date-reglement').value = iso;
+}
+
+function frDate(iso) {
+    if (!iso) return '';
+    var parts = iso.split('-');
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+
+// ============================================================
+//  GESTION DES LIGNES
+// ============================================================
+
+function makeRow(desc, qty, price) {
+    var id = uid();
+    var tr = document.createElement('tr');
+    tr.dataset.id = id;
+    tr.innerHTML = `
+        <td class="col-desc"><textarea rows="2" class="f-desc" style="width:100%;border:none;background:transparent;font:inherit;font-size:14px;padding:4px 0;resize:vertical;">${desc || ''}</textarea></td>
+        <td class="col-qty qty"><input type="number" class="f-qty" min="0" step="1" value="${qty != null ? qty : 1}" style="width:100%;border:none;background:transparent;font:inherit;font-size:14px;padding:4px 0;text-align:right;"></td>
+        <td class="col-price price"><input type="number" class="f-price" min="0" step="0.01" value="${price != null ? price : ''}" style="width:100%;border:none;background:transparent;font:inherit;font-size:14px;padding:4px 0;text-align:right;"></td>
+        <td class="col-amount amount-cell"><span class="f-amount">0,00 €</span></td>
+        <td class="col-del"><button type="button" class="del-btn" title="Supprimer">✕</button></td>
+    `;
+    tr.querySelector('.del-btn').addEventListener('click', function() {
+        tr.remove();
+        recalc();
+    });
+    tr.querySelectorAll('input, textarea').forEach(function(el) {
+        el.addEventListener('input', recalc);
+    });
+    return tr;
+}
+
+function recalc() {
+    var totalHT = 0;
+    var rows = document.querySelectorAll('#items-body tr');
+    rows.forEach(function(tr) {
+        var qty = parseFloat(tr.querySelector('.f-qty').value) || 0;
+        var price = parseFloat(tr.querySelector('.f-price').value) || 0;
+        var amount = qty * price;
+        tr.querySelector('.f-amount').textContent = fmtEUR(amount);
+        totalHT += amount;
+    });
+    var tvaRate = parseFloat(document.getElementById('tva-rate').value) || 0;
+    var tva = totalHT * tvaRate / 100;
+    var ttc = totalHT + tva;
+    document.getElementById('total-ht').textContent = fmtEUR(totalHT);
+    document.getElementById('total-tva').textContent = fmtEUR(tva);
+    document.getElementById('total-ttc').textContent = fmtEUR(ttc);
+}
+
+// ============================================================
+//  EVENEMENTS
+// ============================================================
+
+document.getElementById('tva-rate').addEventListener('input', recalc);
+
+document.getElementById('add-row-btn').addEventListener('click', function() {
+    document.getElementById('items-body').appendChild(makeRow('', 1, ''));
+});
+
+document.getElementById('reset-btn').addEventListener('click', function() {
+    if (!confirm('Reinitialiser tous les champs ?')) return;
+    document.getElementById('f-numero').value = 'F-2026-001';
+    document.getElementById('f-echeance').value = '30 jours';
+    document.getElementById('f-nom').value = '';
+    document.getElementById('f-adresse').value = '';
+    document.getElementById('f-siret').value = '';
+    document.getElementById('f-ape').value = '';
+    document.getElementById('f-ref-devis').value = '';
+    document.getElementById('f-mode-paiement').value = 'Virement bancaire';
+    document.getElementById('items-body').innerHTML = '';
+    document.getElementById('items-body').appendChild(makeRow('Prestation de transport', 1, 30833.33));
+    document.getElementById('tva-rate').value = 20;
+    setToday();
+    recalc();
+});
+
+// ============================================================
+//  GENERATION PDF
+// ============================================================
+
+document.getElementById('generate-btn').addEventListener('click', function() {
+    if (typeof window.jspdf === 'undefined') {
+        alert('Erreur : jsPDF n\'est pas charge. Verifiez votre connexion internet.');
+        return;
+    }
+
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+    // ---- Recuperation des donnees ----
+    var numero = document.getElementById('f-numero').value || 'F-2026-001';
+    var dateVal = document.getElementById('f-date').value;
+    var echeance = document.getElementById('f-echeance').value || '30 jours';
+    var nom = document.getElementById('f-nom').value || 'Client';
+    var adresse = document.getElementById('f-adresse').value || '';
+    var siret = document.getElementById('f-siret').value || '';
+    var ape = document.getElementById('f-ape').value || '';
+    var modePaiement = document.getElementById('f-mode-paiement').value;
+    var dateReglement = document.getElementById('f-date-reglement').value;
+    var refDevis = document.getElementById('f-ref-devis').value || '';
+
+    // ---- Lignes ----
+    var items = [];
+    var totalHTnum = 0;
+    var rows = document.querySelectorAll('#items-body tr');
+    rows.forEach(function(tr) {
+        var desc = tr.querySelector('.f-desc').value || '';
+        var qty = parseFloat(tr.querySelector('.f-qty').value) || 0;
+        var price = parseFloat(tr.querySelector('.f-price').value) || 0;
+        var amount = qty * price;
+        totalHTnum += amount;
+        items.push([desc, String(qty), fmtEUR(price), fmtEUR(amount)]);
+    });
+
+    var tvaRate = parseFloat(document.getElementById('tva-rate').value) || 0;
+    var tvaNum = totalHTnum * tvaRate / 100;
+    var ttcNum = totalHTnum + tvaNum;
+
+    var orange = [232, 93, 44];
+    var charcoal = [30, 30, 30];
+    var grey = [110, 106, 98];
+    var lightBg = [250, 249, 247];
+    var lineCol = [220, 215, 208];
+
+    // ---- Construction du PDF ----
+    var y = 20;
+
+    // En-tete
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(24);
+    doc.setTextColor(orange[0], orange[1], orange[2]);
+    doc.text('FACTURE', 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(grey[0], grey[1], grey[2]);
+    doc.text('TRANSMADEL — Demenagement & Transport', 14, y);
+    y += 10;
+
+    // Coordonnees TRANSMADEL (a droite)
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(charcoal[0], charcoal[1], charcoal[2]);
+    var coords = [
+        'TRANSMADEL',
+        "18 rue d'Aulnay, Gonesse",
+        'SIRET : 90064539100021',
+        'APE : 4941B',
+        'SASU au capital de 3000 €'
+    ];
+    coords.forEach(function(line, i) {
+        doc.text(line, 196, 20 + i * 5.5, { align: 'right' });
+    });
+
+    doc.setDrawColor(orange[0], orange[1], orange[2]);
+    doc.setLineWidth(0.8);
+    doc.line(14, 48, 196, 48);
+
+    y = 56;
+
+    // ---- Infos facture (gauche) ----
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(orange[0], orange[1], orange[2]);
+    doc.text('Facture', 14, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(charcoal[0], charcoal[1], charcoal[2]);
+    doc.text('N° facture : ' + numero, 14, y);
+    y += 5.5;
+    doc.text('Date : ' + frDate(dateVal), 14, y);
+    y += 5.5;
+    doc.text('Echeance : ' + echeance, 14, y);
+    y += 8;
+
+    // ---- Infos client (droite) ----
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(orange[0], orange[1], orange[2]);
+    doc.text('Client', 110, 56);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(charcoal[0], charcoal[1], charcoal[2]);
+    doc.text('Societe / Nom : ' + nom, 110, 62);
+    if (adresse) doc.text('Adresse : ' + adresse, 110, 67.5);
+    if (siret) doc.text('SIRET : ' + siret, 110, 73);
+    if (ape) doc.text('APE : ' + ape, 110, 78.5);
+
+    y = 92;
+
+    // ---- Tableau des prestations ----
+    var tableBody = items.length ? items : [['Aucune prestation', '0', '0,00 €', '0,00 €']];
+    
+    doc.autoTable({
+        startY: y,
+        head: [['Designation', 'Qte', 'Prix unitaire HT', 'Montant HT']],
+        body: tableBody,
+        margin: { left: 14, right: 14 },
+        styles: {
+            font: 'helvetica',
+            fontSize: 10,
+            textColor: charcoal,
+            cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
+            valign: 'middle',
+            lineColor: lineCol,
+            lineWidth: 0.1,
+            minCellHeight: 8
+        },
+        headStyles: {
+            fillColor: charcoal,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9.5,
+            cellPadding: { top: 4, bottom: 4, left: 4, right: 4 }
+        },
+        columnStyles: {
+            0: { cellWidth: 82 },
+            1: { cellWidth: 22, halign: 'center' },
+            2: { cellWidth: 36, halign: 'right' },
+            3: { cellWidth: 42, halign: 'right' }
+        },
+        alternateRowStyles: { fillColor: lightBg }
+    });
+
+    var finalY = doc.lastAutoTable.finalY + 6;
+
+    // ---- Totaux ----
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(charcoal[0], charcoal[1], charcoal[2]);
+    doc.text('Total Hors Taxes', 140, finalY);
+    doc.text(fmtEUR(totalHTnum), 196, finalY, { align: 'right' });
+    finalY += 6.5;
+    doc.text('TVA (' + tvaRate + ' %)', 140, finalY);
+    doc.text(fmtEUR(tvaNum), 196, finalY, { align: 'right' });
+    finalY += 3;
+    doc.setDrawColor(charcoal[0], charcoal[1], charcoal[2]);
+    doc.setLineWidth(0.4);
+    doc.line(140, finalY, 196, finalY);
+    finalY += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(orange[0], orange[1], orange[2]);
+    doc.text('TOTAL TTC', 140, finalY);
+    doc.text(fmtEUR(ttcNum), 196, finalY, { align: 'right' });
+
+    finalY += 14;
+
+    // ---- Reglement ----
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(orange[0], orange[1], orange[2]);
+    doc.text('Reglement', 14, finalY);
+    finalY += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(charcoal[0], charcoal[1], charcoal[2]);
+    doc.text('Mode de paiement : ' + modePaiement, 14, finalY);
+    finalY += 5.5;
+    doc.text('Date de reglement : ' + frDate(dateReglement), 14, finalY);
+    finalY += 5.5;
+    if (refDevis) doc.text('Reference devis : ' + refDevis, 14, finalY);
+    finalY += 10;
+
+    // ---- Signature ----
+    doc.setDrawColor(lineCol[0], lineCol[1], lineCol[2]);
+    doc.setLineWidth(0.3);
+    doc.line(14, finalY, 90, finalY);
+    doc.setFontSize(9);
+    doc.setTextColor(grey[0], grey[1], grey[2]);
+    doc.text('Fait a Gonesse, le ' + frDate(dateVal), 14, finalY + 5);
+    
+
+    // ---- Footer ----
+    var pageHeight = doc.internal.pageSize.getHeight();
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(grey[0], grey[1], grey[2]);
+    doc.text("SIRET : 90064539100021 - APE : 4941B - 18 rue d'Aulnay", 105, pageHeight - 14, { align: 'center' });
+    doc.text('SASU au capital de 3000 euros', 105, pageHeight - 9, { align: 'center' });
+
+    // ---- Sauvegarde ----
+    var safeName = nom.replace(/[^a-z0-9]+/gi, '_').toLowerCase() || 'client';
+    var safeDate = dateVal || 'date';
+    doc.save('facture_' + safeName + '_' + safeDate + '.pdf');
+});
+
+// ============================================================
+//  INIT
+// ============================================================
+
+setToday();
+document.getElementById('items-body').appendChild(makeRow('Prestation de transport', 1, 30833.33));
+recalc();
+</script>
+</body>
+</html>
